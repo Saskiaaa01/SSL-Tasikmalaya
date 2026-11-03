@@ -9,11 +9,9 @@ class HealthCheckTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
-    public function home_page_is_accessible()
+    public function test_home_page_is_accessible(): void
     {
         $response = $this->get('/');
         $response->assertStatus(200);
     }
 }
-
