@@ -108,7 +108,9 @@
                                 @php $ssl = $domain->latestSslCheck; @endphp
                                 <tr class="hover:bg-gray-50/50 transition">
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="font-medium text-gray-900">{{ $domain->hostname }}</div>
+                                        <a href="{{ route('domains.show', $domain) }}" class="font-medium text-indigo-600 hover:text-indigo-900 hover:underline">
+                                            {{ $domain->hostname }}
+                                        </a>
                                         <div class="text-xs text-gray-500">Port: {{ $domain->port }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">

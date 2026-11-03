@@ -38,6 +38,22 @@ class DomainController extends Controller
     }
 
     /**
+     * Display the specified resource.
+     */
+    public function show(Domain $domain): View
+    {
+        Gate::authorize('view', $domain);
+
+        $domain->load([
+            'latestSslCheck',
+            'sslChecks' => fn ($q) => $q->latest('checked_at')->take(10),
+            'notifications' => fn ($q) => $q->latest('sent_at')->take(10),
+        ]);
+
+        return view('domains.show', compact('domain'));
+    }
+
+    /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request): RedirectResponse

@@ -22,6 +22,16 @@ class DomainCrudTest extends TestCase
 
         $response = $this->actingAs($user)->get(route('domains.index'));
         $response->assertStatus(200);
+
+        $domain = Domain::create([
+            'user_id' => $user->id,
+            'hostname' => 'detail.tasikmalayakota.go.id',
+            'port' => 443,
+            'status' => 'active',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('domains.show', $domain));
+        $response->assertStatus(200);
     }
 
     public function test_user_can_create_domain_and_triggers_ssl_check_job(): void
