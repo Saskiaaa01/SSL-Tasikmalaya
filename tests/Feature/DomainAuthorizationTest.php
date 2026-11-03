@@ -75,3 +75,4 @@ class DomainAuthorizationTest extends TestCase
         $this->assertDatabaseMissing('domains', ['id' => $domain->id]);
     }
 }
+

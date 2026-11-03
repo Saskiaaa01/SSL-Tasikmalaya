@@ -66,3 +66,4 @@ class SslCheckerServiceTest extends TestCase
         $this->assertEquals(10, $days);
     }
 }
+

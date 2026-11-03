@@ -36,3 +36,4 @@ class SslCheck extends Model
         return $this->belongsTo(Domain::class);
     }
 }
+

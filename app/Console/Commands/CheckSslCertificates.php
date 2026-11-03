@@ -47,3 +47,4 @@ class CheckSslCertificates extends Command
         return Command::SUCCESS;
     }
 }
+

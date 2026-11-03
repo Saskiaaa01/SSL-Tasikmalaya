@@ -129,9 +129,14 @@
                                                 ✕ Expired
                                             </span>
                                         @else
-                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800" title="{{ $ssl->error_message }}">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 cursor-help" title="{{ $ssl->error_message ?? 'Koneksi gagal atau sertifikat tidak dapat diakses' }}">
                                                 ✕ Error
                                             </span>
+                                            @if($ssl->error_message)
+                                                <div class="text-[10px] text-red-500 mt-0.5 truncate max-w-[150px]" title="{{ $ssl->error_message }}">
+                                                    {{ Str::limit($ssl->error_message, 25) }}
+                                                </div>
+                                            @endif
                                         @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
@@ -175,6 +180,52 @@
                                                 + {{ __('Tambah Domain Pertama') }}
                                             </a>
                                         </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Recent Notifications Section -->
+            <div class="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                    <h3 class="text-base font-semibold text-gray-900">{{ __('Riwayat Notifikasi Peringatan Terakhir') }}</h3>
+                    <p class="text-xs text-gray-500">{{ __('Catatan pengiriman pesan alert WhatsApp (H-30, H-14, H-7, EXPIRED).') }}</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">{{ __('Domain') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">{{ __('Jenis Alert') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">{{ __('Tujuan') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">{{ __('Status Pengiriman') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">{{ __('Waktu') }}</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            @forelse ($recentNotifications as $notif)
+                                <tr class="hover:bg-gray-50/50 text-sm">
+                                    <td class="px-6 py-3 font-medium text-gray-900">{{ $notif->domain->hostname ?? '-' }}</td>
+                                    <td class="px-6 py-3">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold uppercase {{ $notif->type === 'expired' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800' }}">
+                                            {{ $notif->type }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-3 text-gray-600 text-xs">{{ $notif->recipient ?? '-' }}</td>
+                                    <td class="px-6 py-3">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ $notif->status === 'sent' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                                            {{ $notif->status === 'sent' ? '✓ Terkirim' : 'Simulasi/Pending' }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-3 text-gray-500 text-xs">{{ $notif->sent_at ? $notif->sent_at->diffForHumans() : '-' }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="px-6 py-4 text-center text-gray-400 text-xs">
+                                        {{ __('Belum ada riwayat notifikasi yang terkirim.') }}
                                     </td>
                                 </tr>
                             @endforelse

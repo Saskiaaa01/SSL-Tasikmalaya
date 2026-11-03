@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Domain;
+use App\Models\Notification;
 use App\Models\SslCheck;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -53,6 +54,12 @@ class DashboardController extends Controller
             ->take(10)
             ->get();
 
+        $recentNotifications = Notification::whereIn('domain_id', $domainIds)
+            ->with('domain')
+            ->latest('sent_at')
+            ->take(5)
+            ->get();
+
         return view('dashboard', compact(
             'domains',
             'totalDomains',
@@ -60,7 +67,9 @@ class DashboardController extends Controller
             'expiringCount',
             'expiredCount',
             'errorCount',
-            'recentChecks'
+            'recentChecks',
+            'recentNotifications'
         ));
     }
 }
+

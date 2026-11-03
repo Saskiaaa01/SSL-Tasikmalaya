@@ -1,59 +1,104 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SSLGuard - Sistem Monitoring Masa Berlaku SSL/TLS
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+SSLGuard adalah aplikasi pemantauan otomatis masa berlaku sertifikat SSL/TLS untuk seluruh domain dan subdomain yang dikelola oleh Dinas Komunikasi dan Informatika (Diskominfo) Kota Tasikmalaya.
 
-## About Laravel
+Aplikasi ini mendeteksi status validitas sertifikat secara periodik dan mengirimkan notifikasi peringatan dini melalui WhatsApp Cloud API pada **H-30, H-14, H-7, dan EXPIRED** dengan sistem pencegahan pesan ganda (*idempotency*).
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🚀 Fitur Utama
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **Pemeriksaan TLS Real-Time & Detail:** Memeriksa sertifikat SSL langsung ke server tujuan (masa berlaku, issuer, SHA-256 fingerprint, dan rantai sertifikat/chain).
+- **Proteksi SSRF (Server-Side Request Forgery):** Memvalidasi resolusi DNS dan memblokir seluruh jangkauan IP privat/non-publik (IPv4 dan IPv6) sebelum membuka koneksi jaringan.
+- **Pencegahan Spam Notifikasi (Idempotency):** Notifikasi WhatsApp H-30, H-14, H-7, dan EXPIRED hanya dikirim 1 kali untuk sidik jari (*fingerprint*) sertifikat yang sama.
+- **Role-Based Access Control (RBAC):**
+  - **Administrator:** Memiliki hak pantau dan kelola seluruh domain dalam sistem.
+  - **Website Owner:** Memiliki hak kelola eksklusif hanya untuk domain yang didaftarkan oleh akunnya.
+- **Dashboard Metrik Visual:** Menampilkan ringkasan total domain, sertifikat aktif/valid, segera kadaluarsa, kadaluarsa/error, serta riwayat notifikasi WhatsApp terakhir.
+- **Pemeriksaan Terjadwal (Scheduler):** Job otomatis harian dieksekusi setiap pukul **07.00 WIB** (`Asia/Jakarta`).
+- **Audit Logging:** Setiap penambahan, pembaruan, penghapusan domain, dan eksekusi SSL check dicatat di tabel `audit_logs`.
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## 🛠️ Persyaratan Sistem
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- PHP >= 8.2 (ekstensi `openssl`, `pdo_sqlite` / `pdo_pgsql`, `curl`, `mbstring`)
+- Composer >= 2.0
+- Node.js >= 18.x & NPM
+- Database: SQLite (default untuk local dev) atau PostgreSQL (production)
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## ⚙️ Panduan Instalasi Lokal
 
-### Premium Partners
+1. **Clone Repositori:**
+   ```bash
+   git clone https://github.com/Saskiaaa01/SSL-Tasikmalaya.git
+   cd SSL-Tasikmalaya
+   ```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+2. **Instal Dependensi PHP & JavaScript:**
+   ```bash
+   composer install
+   npm install
+   npm run build
+   ```
 
-## Contributing
+3. **Konfigurasi Environment:**
+   ```bash
+   cp .env.example .env
+   php artisan key:generate
+   ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+4. **Konfigurasi WhatsApp Cloud API (Opsional untuk Testing Nyata):**
+   Tambahkan kredensial di file `.env`:
+   ```env
+   WHATSAPP_CLOUD_API_TOKEN=your_token_here
+   WHATSAPP_PHONE_NUMBER_ID=your_phone_number_id_here
+   WHATSAPP_API_VERSION=v21.0
+   ```
+   *Catatan: Jika token belum diisi, sistem otomatis masuk ke mode simulasi aman dan mencatat isi notifikasi ke log tanpa error.*
 
-## Code of Conduct
+5. **Jalankan Migrasi Database:**
+   ```bash
+   php artisan migrate
+   ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+6. **Menjalankan Server Lokal:**
+   ```bash
+   php artisan serve
+   ```
+   Akses aplikasi di browser pada: `http://127.0.0.1:8000`
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 🔄 Menjalankan Background Worker & Scheduler
 
-## License
+1. **Queue Worker (untuk memproses pengecekan SSL & kirim WhatsApp):**
+   ```bash
+   php artisan queue:work --timeout=60
+   ```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+2. **Scheduler (otomatis harian pukul 07.00 WIB):**
+   Untuk pengujian lokal:
+   ```bash
+   php artisan schedule:run
+   ```
+   Atau jalankan manual command pemeriksaan seluruh domain:
+   ```bash
+   php artisan ssl:check-daily
+   ```
+
+---
+
+## 🧪 Menjalankan Automated Tests
+
+Aplikasi dilengkapi test suite komprehensif untuk validasi Model, RBAC Policy, Proteksi SSRF, Kalkulasi Masa Berlaku, dan Idempotensi Notifikasi:
+```bash
+php artisan test
+```
+
+---
+
+## 📄 Lisensi
+Dikembangkan untuk keperluan operasional PKL Dinas Komunikasi dan Informatika Kota Tasikmalaya.

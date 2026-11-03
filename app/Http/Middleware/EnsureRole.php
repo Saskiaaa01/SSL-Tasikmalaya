@@ -31,3 +31,4 @@ class EnsureRole
         abort(403, 'Unauthorized action.');
     }
 }
+

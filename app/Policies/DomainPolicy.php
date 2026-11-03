@@ -55,3 +55,4 @@ class DomainPolicy
         return $user->isAdmin() || $domain->user_id === $user->id;
     }
 }
+

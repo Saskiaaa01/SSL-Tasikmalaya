@@ -153,3 +153,4 @@ class DomainController extends Controller
         return back()->with('status', "Pemeriksaan SSL untuk {$domain->hostname} telah dijadwalkan ke antrian.");
     }
 }
+

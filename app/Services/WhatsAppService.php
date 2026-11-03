@@ -30,6 +30,11 @@ class WhatsAppService
         // Sanitize recipient phone number
         $recipient = preg_replace('/[^0-9]/', '', $recipient);
 
+        // Convert Indonesian local format 08... to international 628...
+        if (str_starts_with($recipient, '0')) {
+            $recipient = '62' . substr($recipient, 1);
+        }
+
         if (empty($this->token) || empty($this->phoneNumberId)) {
             Log::warning("WhatsApp Cloud API credentials not configured. Message simulated for {$recipient}: {$message}");
             return [
@@ -77,3 +82,4 @@ class WhatsAppService
         }
     }
 }
+

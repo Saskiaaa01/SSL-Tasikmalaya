@@ -88,3 +88,4 @@ class NotificationIdempotencyTest extends TestCase
         $this->assertEquals(2, Notification::count());
     }
 }
+

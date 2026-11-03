@@ -61,3 +61,4 @@ class DomainCrudTest extends TestCase
         $response->assertSessionHasErrors('hostname');
     }
 }
+

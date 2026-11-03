@@ -110,3 +110,4 @@ class CheckDomainSslJob implements ShouldQueue
         }
     }
 }
+

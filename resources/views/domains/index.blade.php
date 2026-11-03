@@ -79,9 +79,14 @@
                                         ✕ Expired
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 cursor-help" title="{{ $ssl->error_message ?? 'Pemeriksaan gagal' }}">
                                         ✕ Error
                                     </span>
+                                    @if($ssl->error_message)
+                                        <div class="text-[10px] text-red-500 mt-0.5 max-w-[160px] truncate" title="{{ $ssl->error_message }}">
+                                            {{ Str::limit($ssl->error_message, 25) }}
+                                        </div>
+                                    @endif
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">

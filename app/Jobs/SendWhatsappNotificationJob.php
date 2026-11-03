@@ -90,3 +90,4 @@ class SendWhatsappNotificationJob implements ShouldQueue
         return "⚠️ [SSLGuard Peringatan] Sertifikat SSL untuk domain {$hostname} akan kadaluarsa dalam {$days} hari lagi ({$this->type}). Silakan lakukan perpanjangan sertifikat segera.";
     }
 }
+

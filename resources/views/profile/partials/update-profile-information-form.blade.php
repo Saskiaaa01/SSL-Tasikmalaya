@@ -47,6 +47,13 @@
             @endif
         </div>
 
+        <div>
+            <x-input-label for="phone_number" :value="__('Nomor WhatsApp (untuk notifikasi SSL)')" />
+            <x-text-input id="phone_number" name="phone_number" type="text" class="mt-1 block w-full" :value="old('phone_number', $user->phone_number)" placeholder="Contoh: 08123456789 atau 628123456789" />
+            <p class="text-xs text-gray-500 mt-1">Peringatan sertifikat SSL akan dikirimkan ke nomor ini.</p>
+            <x-input-error class="mt-2" :messages="$errors->get('phone_number')" />
+        </div>
+
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Save') }}</x-primary-button>
 
