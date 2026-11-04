@@ -47,6 +47,9 @@
         .sg-mini-card { border: 1px solid #e5eaf3; border-radius: 12px; padding: 12px 14px; background: #f8fafc; }
         .sg-mini-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; }
         .sg-dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 0 3px rgba(16, 185, 129, .2); }
+        .sg-dot-amber { background: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, .2); }
+        .sg-nav-dot { margin-left: auto; width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; }
+        .sg-user-name:hover { color: #2563eb; }
         .sg-mini-text { font-size: 12px; color: #64748b; margin-top: 6px; line-height: 1.5; }
         .sg-mini-text b { color: #334155; }
         .sg-user { display: flex; align-items: center; gap: 10px; }
@@ -203,6 +206,15 @@
     $sgInitials = $sgUser
         ? collect(explode(' ', trim($sgUser->name)))->filter()->take(2)->map(fn ($w) => mb_strtoupper(mb_substr($w, 0, 1)))->implode('')
         : '?';
+    $sgWaConfigured = filled(config('services.whatsapp.token')) && filled(config('services.whatsapp.phone_number_id'));
+    $sgWaToday = 0;
+    if ($sgUser) {
+        $sgWaQuery = \App\Models\Notification::whereDate('sent_at', now()->toDateString());
+        if (! $sgIsAdmin) {
+            $sgWaQuery->whereIn('domain_id', \App\Models\Domain::where('user_id', $sgUser->id)->pluck('id'));
+        }
+        $sgWaToday = $sgWaQuery->count();
+    }
 @endphp
 
 <div class="sg-overlay" id="sgOverlay"></div>
@@ -234,21 +246,14 @@
                 <a href="{{ route('whatsapp.log') }}" class="sg-nav-link {{ request()->routeIs('whatsapp.*') ? 'active' : '' }}">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
                     Log WhatsApp
+                    @if ($sgWaToday > 0)
+                        <span class="sg-nav-dot" title="{{ $sgWaToday }} notifikasi hari ini"></span>
+                    @endif
                 </a>
             @endif
         </div>
 
-        @if (Route::has('profile.edit'))
-            <div class="sg-nav-group">
-                <div class="sg-nav-label">AKUN</div>
-                <a href="{{ route('profile.edit') }}" class="sg-nav-link {{ request()->routeIs('profile.*') ? 'active' : '' }}">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    Profil Saya
-                </a>
-            </div>
-        @endif
-
-        @if (Route::has('admin.users'))
+        @if ($sgIsAdmin && Route::has('admin.users'))
             <div class="sg-nav-group">
                 <div class="sg-nav-label">ADMINISTRASI</div>
                 <a href="{{ route('admin.users') }}" class="sg-nav-link {{ request()->routeIs('admin.*') ? 'active' : '' }}">
@@ -261,8 +266,19 @@
 
     <div class="sg-sidebar-bottom">
         <div class="sg-mini-card">
-            <div class="sg-mini-title"><span class="sg-dot"></span> WhatsApp Cloud API</div>
-            <div class="sg-mini-text">Meta Platform: <b>Aktif</b><br>Scheduler: <b>07:00 WIB (Daily)</b></div>
+            <div class="sg-mini-title">
+                <span class="sg-dot {{ $sgWaConfigured ? '' : 'sg-dot-amber' }}"></span> WhatsApp Cloud API
+            </div>
+            <div class="sg-mini-text">
+                Meta Platform: <b>{{ $sgWaConfigured ? 'Aktif' : 'Mode Simulasi' }}</b><br>
+                Scheduler: <b>07:00 WIB (Daily)</b>
+            </div>
+            @if (Route::has('whatsapp.test'))
+                <form method="POST" action="{{ route('whatsapp.test') }}" style="margin-top:10px;">
+                    @csrf
+                    <button type="submit" class="sg-btn sg-btn-sm sg-btn-soft">Tes Kirim WA</button>
+                </form>
+            @endif
         </div>
         <div class="sg-mini-card sg-user">
             <div class="sg-avatar">{{ $sgInitials }}</div>
@@ -272,7 +288,7 @@
                 @else
                     <div class="sg-user-name">{{ $sgUser->name ?? '-' }}</div>
                 @endif
-                <div class="sg-user-role">{{ $sgIsAdmin ? 'Administrator' : 'Pengguna' }}</div>
+                <div class="sg-user-role">{{ $sgIsAdmin ? 'Administrator' : 'Owner' }}</div>
             </div>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
