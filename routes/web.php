@@ -11,6 +11,14 @@ Route::get('/', function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Admin area – only users with the "Administrator" role can access
+    Route::prefix('admin')
+        ->name('admin.')
+        ->middleware(['role:Administrator'])
+        ->group(function () {
+            Route::get('dashboard', [\App\Http\Controllers\Admin\AdminDashboardController::class, 'index'])
+                ->name('dashboard');
+        });
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('domains', DomainController::class);

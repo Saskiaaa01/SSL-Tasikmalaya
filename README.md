@@ -101,4 +101,46 @@ php artisan test
 ---
 
 ## 📄 Lisensi
+
+---
+
+## 🛎️ Handling Expired Certificates
+
+When a domain's SSL/TLS certificate expires, the system follows this flow:
+
+1. **Detection**
+   - The daily scheduler (`php artisan ssl:check-daily`) runs `CheckDomainSslJob` for each domain.
+   - Inside the job the certificate's `days_remaining` is calculated. If the value is **≤ 0**, the status is set to `expired`.
+
+2. **UI Update**
+   - The domain detail view (`resources/views/domains/show.blade.php`) displays a red badge:
+     ```html
+     <span class="badge bg-red-600 text-white">✕ Expired / Kadaluarsa</span>
+     ```
+   - Hovering the badge shows an error tooltip containing the job‑generated `error_message` (e.g., "certificate has expired").
+   - The dashboard (`resources/views/dashboard.blade.php`) similarly shows the expired badge on the domain card.
+
+3. **Notification**
+   - An `ExpiredSslNotification` job is dispatched.
+   - If WhatsApp Cloud API credentials are present, a WhatsApp message is sent to the configured number. Otherwise the system logs the message content and marks the notification as *simulated*.
+   - Idempotency ensures that only **one** notification per fingerprint is sent, avoiding duplicate alerts for the same expired certificate.
+
+4. **Audit Logging**
+   - An entry is inserted into the `audit_logs` table with `action = 'ssl_expired'`, the domain ID, timestamp (in the `Asia/Jakarta` timezone), and the fingerprint that triggered the alert.
+   - You can view these logs in `storage/logs/laravel.log` or via any admin UI you may add later.
+
+5. **Manual Re‑check (Optional)**
+   - To re‑trigger the check for a specific domain without waiting for the daily schedule, send a POST request to:
+     ```http
+     POST /domains/{domain}/check
+     ```
+   - The response will include the updated status and, if applicable, a fresh notification entry.
+
+### Where to Find the Information
+- **Badge on UI** – visible on the domain detail page and the dashboard.
+- **Recent Notifications Table** – located under the *Recent Notifications* section on the dashboard, showing type `expired`, status (`sent`/`simulated`), timestamp, and recipient.
+- **Audit Log Table** – in the database (`audit_logs`) and the `storage/logs/laravel.log` file.
+- **Timezone** – All timestamps are stored and displayed using the `Asia/Jakarta` timezone as configured in `config/app.php`.
+
+---
 Dikembangkan untuk keperluan operasional PKL Dinas Komunikasi dan Informatika Kota Tasikmalaya.
