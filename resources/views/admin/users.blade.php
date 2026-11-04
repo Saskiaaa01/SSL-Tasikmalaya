@@ -19,6 +19,8 @@
     .us-name { font-weight: 700; }
     .us-email { font-size: 12px; color: #64748b; margin-top: 2px; }
     .us-you { font-size: 10px; font-weight: 700; color: #2563eb; background: #eff6ff; border: 1px solid #bfdbfe; padding: 1px 6px; border-radius: 999px; margin-left: 6px; vertical-align: middle; }
+    .us-domain-link { transition: all .15s; }
+    .us-domain-link:hover { background: #dbeafe; border-color: #93c5fd; }
     .us-role-form { display: flex; gap: 8px; align-items: center; justify-content: flex-end; }
     .us-select {
         height: 34px; padding: 0 30px 0 10px; border: 1px solid #dbe4f3; border-radius: 8px; background: #fff;
@@ -37,7 +39,7 @@
         <div class="sg-panel-head">
             <div>
                 <div class="sg-panel-title">Daftar Pengguna</div>
-                <div class="sg-panel-sub">Administrator dapat melihat dan mengelola seluruh domain. Pengguna hanya melihat domain miliknya.</div>
+                <div class="sg-panel-sub">Administrator dapat melihat dan mengelola seluruh domain. Owner hanya melihat domain miliknya. Klik jumlah domain untuk melihat daftarnya.</div>
             </div>
         </div>
         <div class="sg-table-wrap">
@@ -82,7 +84,13 @@
                                     <span class="sg-pill tone-amber" style="font-family:inherit;">Belum diisi</span>
                                 @endif
                             </td>
-                            <td><span class="sg-pill mono tone-blue">{{ $domainCounts[$u->id] ?? 0 }} domain</span></td>
+                            <td>
+                                @if (($domainCounts[$u->id] ?? 0) > 0)
+                                    <a href="{{ route('domains.index', ['owner' => $u->id]) }}" class="sg-pill mono tone-blue us-domain-link" title="Lihat domain milik {{ $u->name }}">{{ $domainCounts[$u->id] }} domain &rarr;</a>
+                                @else
+                                    <span class="sg-pill mono tone-gray">0 domain</span>
+                                @endif
+                            </td>
                             <td style="font-size:13px;color:#64748b;">{{ $u->created_at ? $u->created_at->format('d M Y') : '-' }}</td>
                             <td>
                                 <span class="sg-pill {{ $usIsAdmin ? 'tone-blue' : 'tone-gray' }}">{{ $roles[$u->role] ?? ucfirst((string) $u->role) }}</span>

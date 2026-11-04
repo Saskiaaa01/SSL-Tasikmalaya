@@ -20,12 +20,20 @@
     .dm-filters { display: flex; gap: 10px; flex-wrap: wrap; }
 
     .dm-host { display: flex; align-items: flex-start; gap: 10px; }
-    .dm-host a { font-weight: 700; word-break: break-all; }
+    .dm-host a { font-weight: 700; white-space: nowrap; }
     .dm-host a:hover { color: #2563eb; }
     .dm-port { display: inline-block; margin-top: 4px; padding: 1px 7px; border-radius: 6px; background: #f1f5f9; color: #64748b; font-size: 11px; }
     .dm-muted { color: #64748b; font-size: 13px; }
     .dm-err { font-size: 11px; color: #dc2626; margin-top: 4px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
+    .dm-owner { font-size: 13px; font-weight: 600; color: #334155; }
+    .dm-owner:hover { color: #2563eb; text-decoration: underline; }
+    .dm-chip {
+        display: inline-flex; align-items: center; gap: 8px; margin-bottom: 16px; padding: 8px 14px; border-radius: 999px;
+        background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; font-size: 13px;
+    }
+    .dm-chip a { color: #2563eb; font-weight: 700; margin-left: 6px; }
+    .dm-chip a:hover { text-decoration: underline; }
     .dm-actions { display: flex; gap: 6px; justify-content: flex-end; }
     .dm-icon-btn {
         width: 34px; height: 34px; border-radius: 8px; border: 1px solid #e5eaf3; background: #fff;
@@ -50,6 +58,14 @@
             <input type="text" id="dmSearch" class="dm-input" placeholder="Cari nama domain (contoh: dinas.go.id)...">
         </div>
         <div class="dm-filters">
+            @if ($owners->isNotEmpty())
+                <select id="dmOwner" class="dm-select" title="Filter berdasarkan pemilik">
+                    <option value="">Semua Pemilik</option>
+                    @foreach ($owners as $ownerId => $ownerName)
+                        <option value="{{ $ownerId }}" {{ $ownerFilter === $ownerId ? 'selected' : '' }}>{{ $ownerName }}</option>
+                    @endforeach
+                </select>
+            @endif
             <select id="dmStatus" class="dm-select">
                 <option value="">Semua Status</option>
                 <option value="valid">Valid Aman</option>
@@ -65,12 +81,23 @@
         </div>
     </div>
 
+    @if ($ownerFilter)
+        <div class="dm-chip">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Menampilkan domain milik <b>{{ $owners[$ownerFilter] }}</b>
+            <a href="{{ route('domains.index') }}">Tampilkan semua &times;</a>
+        </div>
+    @endif
+
     <div class="sg-card">
         <div class="sg-table-wrap">
             <table class="sg-table" id="dmTable">
                 <thead>
                     <tr>
                         <th>Domain &amp; Port</th>
+                        @if ($owners->isNotEmpty())
+                            <th>Pemilik</th>
+                        @endif
                         <th>Monitoring</th>
                         <th>Sisa Masa Berlaku</th>
                         <th>Status Sertifikat</th>
@@ -125,6 +152,11 @@
                                     </div>
                                 </div>
                             </td>
+                            @if ($owners->isNotEmpty())
+                                <td>
+                                    <a href="{{ route('domains.index', ['owner' => $domain->user_id]) }}" class="dm-owner" data-col="owner" title="Lihat semua domain milik pengguna ini">{{ $owners[$domain->user_id] ?? '-' }}</a>
+                                </td>
+                            @endif
                             <td>
                                 @if ($domain->status === 'active')
                                     <span class="sg-pill tone-blue" data-col="monitoring">Aktif</span>
@@ -176,7 +208,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7">
+                            <td colspan="8">
                                 <div class="sg-empty">
                                     <svg class="ic-gray" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
                                     <div class="sg-empty-title">Belum ada domain yang dimonitor</div>
@@ -187,7 +219,7 @@
                         </tr>
                     @endforelse
                     <tr id="dmNoMatch" style="display:none;">
-                        <td colspan="7" class="sg-empty" style="font-size:13px;">Tidak ada domain yang cocok dengan pencarian/filter.</td>
+                        <td colspan="8" class="sg-empty" style="font-size:13px;">Tidak ada domain yang cocok dengan pencarian/filter.</td>
                     </tr>
                 </tbody>
             </table>
@@ -235,9 +267,25 @@
         search.addEventListener('input', applyFilter);
         status.addEventListener('change', applyFilter);
 
+        // Filter pemilik diproses di server (memuat ulang halaman)
+        var owner = document.getElementById('dmOwner');
+        if (owner) {
+            owner.addEventListener('change', function () {
+                var url = new URL(window.location.href);
+                url.searchParams.delete('page');
+                if (owner.value) {
+                    url.searchParams.set('owner', owner.value);
+                } else {
+                    url.searchParams.delete('owner');
+                }
+                window.location.href = url.toString();
+            });
+        }
+
         document.getElementById('dmExport').addEventListener('click', function () {
-            var header = ['Domain', 'Monitoring', 'Sisa Masa Berlaku', 'Status Sertifikat', 'Penerbit (CA)', 'Terakhir Diperiksa'];
-            var cols = ['host', 'monitoring', 'days', 'status', 'issuer', 'checked'];
+            var hasOwner = !!document.querySelector('[data-col="owner"]');
+            var header = ['Domain'].concat(hasOwner ? ['Pemilik'] : [], ['Monitoring', 'Sisa Masa Berlaku', 'Status Sertifikat', 'Penerbit (CA)', 'Terakhir Diperiksa']);
+            var cols = ['host'].concat(hasOwner ? ['owner'] : [], ['monitoring', 'days', 'status', 'issuer', 'checked']);
             var lines = [header.join(',')];
             rows.forEach(function (row) {
                 if (row.style.display === 'none') return;

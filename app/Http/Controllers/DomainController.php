@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Jobs\CheckDomainSslJob;
 use App\Models\AuditLog;
 use App\Models\Domain;
+use App\Models\User;
 use Closure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,13 +23,24 @@ class DomainController extends Controller
         $user = $request->user();
 
         $query = Domain::with('latestSslCheck');
-        if (! $user->isAdmin()) {
+        $owners = collect();
+        $ownerFilter = null;
+
+        if ($user->isAdmin()) {
+            // Admin: boleh melihat semua domain, dan bisa memfilter per pemilik
+            $owners = User::orderBy('name')->pluck('name', 'id');
+
+            if ($request->filled('owner') && $owners->has((int) $request->input('owner'))) {
+                $ownerFilter = (int) $request->input('owner');
+                $query->where('user_id', $ownerFilter);
+            }
+        } else {
             $query->where('user_id', $user->id);
         }
 
-        $domains = $query->latest()->paginate(15);
+        $domains = $query->latest()->paginate(15)->withQueryString();
 
-        return view('domains.index', compact('domains'));
+        return view('domains.index', compact('domains', 'owners', 'ownerFilter'));
     }
 
     /**
@@ -256,4 +268,4 @@ class DomainController extends Controller
             'status.in' => 'Status monitoring tidak valid.',
         ];
     }
-}   
+}
